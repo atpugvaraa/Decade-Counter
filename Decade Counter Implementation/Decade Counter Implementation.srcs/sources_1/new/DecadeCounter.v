@@ -3,7 +3,7 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 11/09/2025 01:29:40 PM
+// Create Date: 09/11/2025 01:29:40 PM
 // Design Name: 
 // Module Name: DecadeCounter
 // Project Name: 
@@ -26,7 +26,10 @@ module DecadeCounter(
     input wire MR2,   // Master Reset pin 2
     input wire MS1,   // Master Set-to-9 (R9) pin 1 (use together with MS2)
     input wire MS2,   // Master Set-to-9 (R9) pin 2
-    output reg [3:0] Q // BCD output: Q[3]..Q[0]
+    output reg QA,
+    output reg QB,
+    output reg QC,
+    output reg QD
 );
 
     // Internal decode of paired asynchronous controls
@@ -38,12 +41,12 @@ module DecadeCounter(
     // On CKA rising edge, toggle Q0.
     always @(posedge CKA or posedge async_reset or posedge async_preset9) begin
         if (async_reset) begin
-            Q[0] <= 1'b0;
+            QA <= 1'b0;
         end else if (async_preset9) begin
             // When preset to 9 (1001), Q0 must be 1
-            Q[0] <= 1'b1;
+            QA <= 1'b1;
         end else begin
-            Q[0] <= ~Q[0];
+            QA <= ~QA;
         end
     end
 
@@ -65,18 +68,18 @@ module DecadeCounter(
     // Asynchronous priority matches the ÷2 section.
     always @(negedge CKB or posedge async_reset or posedge async_preset9) begin
         if (async_reset) begin
-            Q[3:1] <= 3'b000;
+            {QD, QC, QB} <= 3'b000;
         end else if (async_preset9) begin
-            Q[3:1] <= 3'b100; // 100 with Q0=1 => 1001 (decimal 9)
+            {QD, QC, QB} <= 3'b100; // 100 with Q0=1 => 1001 (decimal 9)
         end else begin
             // modulo-5 progression
-            case (Q[3:1])
-                3'b000: Q[3:1] <= 3'b001; // 0/1 -> 2/3 upper bits pattern
-                3'b001: Q[3:1] <= 3'b010; // -> 4/5
-                3'b010: Q[3:1] <= 3'b011; // -> 6/7
-                3'b011: Q[3:1] <= 3'b100; // -> 8/9
-                3'b100: Q[3:1] <= 3'b000; // wrap to 0/1
-                default: Q[3:1] <= 3'b000; // safety: should never occur
+            case ({QD, QC, QB})
+                3'b000: {QD, QC, QB} <= 3'b001; // 0/1 -> 2/3 upper bits pattern
+                3'b001: {QD, QC, QB} <= 3'b010; // -> 4/5
+                3'b010: {QD, QC, QB} <= 3'b011; // -> 6/7
+                3'b011: {QD, QC, QB} <= 3'b100; // -> 8/9
+                3'b100: {QD, QC, QB} <= 3'b000; // wrap to 0/1
+                default: {QD, QC, QB} <= 3'b000; // safety: should never occur
             endcase
         end
     end

@@ -3,7 +3,7 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 11/09/2025 01:53:12 PM
+// Create Date: 09/11/2025 01:53:12 PM
 // Design Name: 
 // Module Name: DecadeCounter_TB
 // Project Name: 
@@ -24,7 +24,10 @@ module DecadeCounter_TB;
     wire CKB;       // Tie to Q0 to realize ÷10
     reg MR1, MR2;
     reg MS1, MS2;
-    wire [3:0] Q;
+    wire QA;
+    wire QB;
+    wire QC;
+    wire QD;
 
     // DUT
     DecadeCounter dut (
@@ -34,17 +37,23 @@ module DecadeCounter_TB;
         .MR2(MR2),
         .MS1(MS1),
         .MS2(MS2),
-        .Q(Q)
+        .QA(QA),
+        .QA(QB),
+        .QA(QC),
+        .QA(QD)
     );
 
     // CKB driven from Q0 for classic 74LS90 ÷10 cascade
-    assign CKB = Q[0];
+    assign CKB = QA;
 
     // Generate CKA clock
     initial begin
         CKA = 0;
         forever #5 CKA = ~CKA; // 100 MHz / 10 ns period in sim
     end
+    
+    integer dec;
+    always @(*) dec = {QD, QC, QB, QA};
 
     // Stimulus
     initial begin
@@ -71,7 +80,7 @@ module DecadeCounter_TB;
 
     // Monitor
     initial begin
-        $display("time  CKA  Q");
-        $monitor("%4t   %b   %b", $time, CKA, Q);
+        $display("time  CKA  QDQCQBQA");
+        $monitor("%4t   %b   %b%b%b%b", $time, CKA, QD, QC, QB, QA);
     end
 endmodule
