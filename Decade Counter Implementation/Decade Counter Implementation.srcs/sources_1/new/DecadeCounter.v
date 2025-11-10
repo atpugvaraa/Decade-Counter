@@ -63,7 +63,7 @@ module DecadeCounter(
     // That means on each CKB tick (which advances every second CKA in ÷10 mode),
     // Q[3:1] progresses through 000->001->010->011->100->000 ...
     // Asynchronous priority matches the ÷2 section.
-    always @(posedge CKB or posedge async_reset or posedge async_preset9) begin
+    always @(negedge CKB or posedge async_reset or posedge async_preset9) begin
         if (async_reset) begin
             Q[3:1] <= 3'b000;
         end else if (async_preset9) begin
