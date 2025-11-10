@@ -20,67 +20,49 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 module DecadeCounter(
-    input wire CKA,   // Clock for divide-by-2 section
-    input wire CKB,   // Clock for divide-by-5 section (often fed by Q[0] for ÷10)
-    input wire MR1,   // Master Reset pin 1 (use together with MR2)
-    input wire MR2,   // Master Reset pin 2
-    input wire MS1,   // Master Set-to-9 (R9) pin 1 (use together with MS2)
-    input wire MS2,   // Master Set-to-9 (R9) pin 2
-    output reg QA,
-    output reg QB,
-    output reg QC,
-    output reg QD
+    input  wire CKA,   // Clock for divide-by-2 section
+    input  wire CKB,   // Clock for divide-by-5 section (tie to QA for ÷10)
+    input  wire MR1,   // Master Reset 1 (use with MR2)
+    input  wire MR2,   // Master Reset 2
+    input  wire MS1,   // Master Set-to-9 (R9) 1 (use with MS2)
+    input  wire MS2,   // Master Set-to-9 (R9) 2
+    output reg  QA,    // LSB
+    output reg  QB,
+    output reg  QC,
+    output reg  QD
 );
+    // Paired async controls (active-high)
+    wire async_reset   = MR1 & MR2;
+    wire async_preset9 = MS1 & MS2;
 
-    // Internal decode of paired asynchronous controls
-    wire async_reset = MR1 & MR2; // active-high when both MR pins are high
-    wire async_preset9 = MS1 & MS2; // active-high when both MS pins are high
-
-    // Divide-by-2 section (Q0)
-    // Asynchronous priority: reset > preset9
-    // On CKA rising edge, toggle Q0.
+    // ÷2 section: QA toggles on posedge CKA
     always @(posedge CKA or posedge async_reset or posedge async_preset9) begin
         if (async_reset) begin
             QA <= 1'b0;
         end else if (async_preset9) begin
-            // When preset to 9 (1001), Q0 must be 1
-            QA <= 1'b1;
+            QA <= 1'b1; // 9 => LSB is 1
         end else begin
             QA <= ~QA;
         end
     end
 
-    // Divide-by-5 section (Q3:Q1)
-    // Implements a modulo-5 state machine that, together with Q0, yields BCD 0..9.
-    // States for Q[3:1] across counts 0..9 (with Q0 as LSB):
-    // 0:  Q3Q2Q1 = 000
-    // 1:  000
-    // 2:  001
-    // 3:  001
-    // 4:  010
-    // 5:  010
-    // 6:  011
-    // 7:  011
-    // 8:  100
-    // 9:  100
-    // That means on each CKB tick (which advances every second CKA in ÷10 mode),
-    // Q[3:1] progresses through 000->001->010->011->100->000 ...
-    // Asynchronous priority matches the ÷2 section.
+    // ÷5 section: clocked on negedge CKB so QA is stable when advancing
+    // State machine over {QB,QC,QD}: 000→001→010→011→100→000...
     always @(negedge CKB or posedge async_reset or posedge async_preset9) begin
         if (async_reset) begin
             {QD, QC, QB} <= 3'b000;
         end else if (async_preset9) begin
-            {QD, QC, QB} <= 3'b100; // 100 with Q0=1 => 1001 (decimal 9)
+            {QD, QC, QB} <= 3'b100; // with QA=1 gives 1001
         end else begin
-            // modulo-5 progression
             case ({QD, QC, QB})
-                3'b000: {QD, QC, QB} <= 3'b001; // 0/1 -> 2/3 upper bits pattern
-                3'b001: {QD, QC, QB} <= 3'b010; // -> 4/5
-                3'b010: {QD, QC, QB} <= 3'b011; // -> 6/7
-                3'b011: {QD, QC, QB} <= 3'b100; // -> 8/9
-                3'b100: {QD, QC, QB} <= 3'b000; // wrap to 0/1
-                default: {QD, QC, QB} <= 3'b000; // safety: should never occur
+                3'b000: {QD, QC, QB} <= 3'b001;
+                3'b001: {QD, QC, QB} <= 3'b010;
+                3'b010: {QD, QC, QB} <= 3'b011;
+                3'b011: {QD, QC, QB} <= 3'b100;
+                3'b100: {QD, QC, QB} <= 3'b000;
+                default: {QD, QC, QB} <= 3'b000; // safety
             endcase
         end
     end
+
 endmodule
