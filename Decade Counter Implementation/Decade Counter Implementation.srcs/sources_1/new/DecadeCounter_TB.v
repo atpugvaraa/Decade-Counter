@@ -19,7 +19,7 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-module tb_DecadeCounter;
+module DecadeCounter_TB;
     reg  CKA;
     wire CKB;
     reg  MR1, MR2;

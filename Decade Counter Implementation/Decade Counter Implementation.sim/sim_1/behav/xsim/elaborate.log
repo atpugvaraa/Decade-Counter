@@ -5,8 +5,5 @@ Running: /home/user/Xilinx/Vivado/2024.1/bin/unwrapped/lnx64.o/xelab --incr --de
 Using 8 slave threads.
 Starting static elaboration
 Pass Through NonSizing Optimizer
-WARNING: [VRFC 10-3633] port 'QA' is already connected [/home/user/Desktop/DecadeCounterProject/Decade Counter Implementation/Decade Counter Implementation.srcs/sources_1/new/DecadeCounter_TB.v:33]
-ERROR: [VRFC 10-3633] port 'QA' is already connected [/home/user/Desktop/DecadeCounterProject/Decade Counter Implementation/Decade Counter Implementation.srcs/sources_1/new/DecadeCounter_TB.v:41]
-ERROR: [VRFC 10-3633] port 'QA' is already connected [/home/user/Desktop/DecadeCounterProject/Decade Counter Implementation/Decade Counter Implementation.srcs/sources_1/new/DecadeCounter_TB.v:42]
-ERROR: [VRFC 10-3633] port 'QA' is already connected [/home/user/Desktop/DecadeCounterProject/Decade Counter Implementation/Decade Counter Implementation.srcs/sources_1/new/DecadeCounter_TB.v:43]
-ERROR: [XSIM 43-3322] Static elaboration of top level Verilog design unit(s) in library work failed.
+Completed static elaboration
+INFO: [XSIM 43-4323] No Change in HDL. Linking previously generated obj files to create kernel
