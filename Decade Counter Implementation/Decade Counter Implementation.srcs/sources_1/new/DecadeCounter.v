@@ -21,7 +21,7 @@
 
 module DecadeCounter(
     input  wire CKA,   // Clock for divide-by-2 section
-    input  wire CKB,   // Clock for divide-by-5 section (tie to QA for ÷10)
+ //   input  wire CKB,   // Clock for divide-by-5 section (tie to QA for Ã·10)
     input  wire MR1,   // Master Reset 1 (use with MR2)
     input  wire MR2,   // Master Reset 2
     input  wire MS1,   // Master Set-to-9 (R9) 1 (use with MS2)
@@ -35,8 +35,21 @@ module DecadeCounter(
     wire async_reset   = MR1 & MR2;
     wire async_preset9 = MS1 & MS2;
 
-    // ÷2 section: QA toggles on posedge CKA
-    always @(posedge CKA or posedge async_reset or posedge async_preset9) begin
+    
+    reg [31:0] counter;
+    reg clk_1Hz = 0;
+
+    always @(posedge CKA) begin
+            if (counter == 49_999_999) begin
+                counter <= 0;
+                clk_1Hz <= ~clk_1Hz;
+            end else begin
+                counter <= counter + 1;
+            end
+        end
+
+    // Ã·2 section: QA toggles on posedge CKA
+    always @(posedge clk_1Hz) begin
         if (async_reset) begin
             QA <= 1'b0;
         end else if (async_preset9) begin
@@ -45,10 +58,12 @@ module DecadeCounter(
             QA <= ~QA;
         end
     end
+    
+    wire CKB = QA;    // divide-by-2 output drives divide-by-5 clock
 
-    // ÷5 section: clocked on negedge CKB so QA is stable when advancing
-    // State machine over {QB,QC,QD}: 000→001→010→011→100→000...
-    always @(negedge CKB or posedge async_reset or posedge async_preset9) begin
+    // Ã·5 section: clocked on negedge CKB so QA is stable when advancing
+    // State machine over {QB,QC,QD}: 000â†’001â†’010â†’011â†’100â†’000...
+    always @(negedge CKB) begin
         if (async_reset) begin
             {QD, QC, QB} <= 3'b000;
         end else if (async_preset9) begin
